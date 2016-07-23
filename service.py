@@ -1,61 +1,72 @@
 import contextlib
 import os
+from os import path
 import re
+import time
 
 import docker
 
 
 @contextlib.contextmanager
-def Container(service, ports):
-    docker_client = docker.from_env(assert_hostname=False)
-    container, port_map = run_container(docker_client, service, ports)
+def Container(service, ports, extras=None):
+    client = docker.from_env(assert_hostname=False)
+    container, port_map = run_container(client, service, ports, extras)
+
     try:
         yield port_map
     finally:
-        stop_container(docker_client, container, remove=True)
+        stop_container(client, container, remove=True)
 
 
-def run_container(docker_client, service, ports):
+def run_container(client, service, ports, extras=None):
     if isinstance(ports, str):
         ports = [ports]
     elif isinstance(ports, int):
         ports = ['{}/tcp'.format(ports)]
 
-    image = _locate_image(docker_client, service)
-    image_ports = _get_image_ports(docker_client, image)
+    image = _locate_image(client, service)
+    image_ports = _get_image_ports(client, image)
 
     missing_ports = [p for p in ports if p not in image_ports]
     if missing_ports:
         raise RuntimeError('Cannot locate service ports in image')
 
-    container = docker_client.create_container(
+    volumes = dict(
+        (path.abspath(volume), mountpoint)
+        for (volume, mountpoint) in extras.get('volumes', {}).items()
+    )
+
+    container = client.create_container(
         image=image['Id'],
         ports=ports,
-        host_config=docker_client.create_host_config(
-            port_bindings=dict((port, None) for port in ports)
+        volumes=list(volumes.keys()) if volumes else None,
+        environment=extras.get('environment'),
+        host_config=client.create_host_config(
+            port_bindings=dict((port, None) for port in ports),
+            binds=volumes if volumes else None
         )
     )
 
     # this can fail with HTTP 404
-    docker_client.start(container=container)
+    client.start(container=container)
 
-    port_map = _get_container_port_mappings(docker_client, container, ports)
+    port_map = _get_container_port_mappings(client, container, ports)
     if len(port_map) == 1:
         port_map = list(port_map.values())[0]
 
     return container['Id'], port_map
 
 
-def stop_container(docker_client, container, timeout=1, remove=True):
-    docker_client.stop(container, timeout=timeout)
+def stop_container(client, container, timeout=1, remove=True):
+    client.stop(container, timeout=timeout)
     if remove:
-        docker_client.remove_container(container)
+        client.remove_container(container)
 
 
-def _locate_image(docker_client, service):
+def _locate_image(client, service):
     id_or_tag = os.environ.get('%s_CONTAINER_IMAGE' % service.upper(), service)
 
-    for image in docker_client.images():
+    for image in client.images():
         if image['Id'].startswith('sha256:' + id_or_tag):
             return image
 
@@ -66,15 +77,15 @@ def _locate_image(docker_client, service):
     raise ValueError('Cannot locate image for service: {}'.format(service))
 
 
-def _get_image_ports(docker_client, image):
-    image_info = docker_client.inspect_image(image=image)
+def _get_image_ports(client, image):
+    image_info = client.inspect_image(image=image)
     return image_info.get('Config', {}).get('ExposedPorts', {}).keys()
 
 
-def _get_container_port_mappings(docker_client, container, ports):
-    container_info = docker_client.inspect_container(container=container)
+def _get_container_port_mappings(client, container, ports):
+    container_info = client.inspect_container(container=container)
 
-    match = re.match(r'[a-z]+://(.*):[0-9]+', docker_client.base_url)
+    match = re.match(r'[a-z]+://(.*):[0-9]+', client.base_url)
     host_ip = match.group(1) if match else '127.0.0.1'  # don't know for sure
 
     def extract_host_port_mappings():
