@@ -62,36 +62,40 @@ class HttpServiceTest(unittest.TestCase):
         _add_extra('VOLUMES')
         _add_extra('ENVIRONMENT')
 
-        with service.Container(self.SERVICE, port, extras) as port_map:
+        logs = []
+        with service.Container(self.SERVICE, port, extras, logs) as port_map:
             self.host, self.port = port_map
             self.base_url = 'http://{}:{}'.format(self.host, self.port)
 
             with requests.Session() as session:
                 self.http_session = session
                 self._connect()
-
                 super(HttpServiceTest, self).run(result)
 
-    def build_url(self, endpoint):
-        separator = '' if endpoint.startswith('/') else '/'
-        return self.base_url + separator + endpoint
+        if result:
+            for testcase, errors in result.errors:
+                if testcase == self:
+                    self._output_logs(sys.stderr, logs)
 
-    def get(self, endpoint):
-        url = self.build_url(endpoint)
-        response = self.http_session.get(url)
+    def build_url(self, path):
+        separator = '' if path.startswith('/') else '/'
+        return self.base_url + separator + path
+
+    def request(self, method, path, **kwargs):
+        url = self.build_url(path)
+        response = self.http_session.request(method, url, **kwargs)
         response.raise_for_status()
         return response
 
-    def get_json(self, endpoint):
-        return self.get(endpoint).json()
+    def request_json(self, method, path, **kwargs):
+        response = self.request(method, path, **kwargs)
+        return response.status_code, response.json()
 
-    def post(self, endpoint, data=None, json=None):
-        url = self.build_url(endpoint)
-        response = self.http_session.post(url, data=data, json=json)
-        response.raise_for_status()
-        return response
+    def request_text(self, method, path, **kwargs):
+        response = self.request(method, path, **kwargs)
+        return response.status_code, response.text
 
-    def _connect(self, max_tries=10, min_interval=0.1, max_interval=10):
+    def _connect(self, max_tries=10, min_interval=0.1, max_interval=5.0):
         interval = min_interval
         for index in range(1, max_tries + 1):
             try:
@@ -101,3 +105,19 @@ class HttpServiceTest(unittest.TestCase):
                 if index < max_tries:
                     time.sleep(interval)
                     interval = min(max_interval, 2 * interval)
+
+    @staticmethod
+    def _output_logs(stream, logs):
+        columns = 80
+        double_line = columns * '='
+        single_line = columns * '-'
+
+        stream.write('\n\n')
+        stream.write('{}\n'.format(double_line))
+        stream.write(' CONTAINER LOGS\n')
+        stream.write('{}\n'.format(single_line))
+        for line in logs:
+            stream.write(line)
+        stream.write('{}\n'.format(single_line))
+        stream.write(' END OF CONTAINER LOGS\n')
+        stream.write('{}\n'.format(double_line))

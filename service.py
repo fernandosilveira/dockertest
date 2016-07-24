@@ -2,20 +2,31 @@ import contextlib
 import os
 from os import path
 import re
+import sys
 import time
 
 import docker
 
 
 @contextlib.contextmanager
-def Container(service, ports, extras=None):
+def Container(service, ports, extras=None, logs=None):
     client = docker.from_env(assert_hostname=False)
     container, port_map = run_container(client, service, ports, extras)
 
     try:
         yield port_map
     finally:
-        stop_container(client, container, remove=True)
+        client.stop(container, timeout=0)
+
+        if logs is not None:
+            container_output = client.logs(
+                container, stdout=True, stderr=True, stream=True,
+                timestamps=True
+            )
+            for line in container_output:
+                logs.append(line.decode('utf-8'))
+
+        client.remove_container(container)
 
 
 def run_container(client, service, ports, extras=None):
