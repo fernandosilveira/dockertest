@@ -65,7 +65,7 @@ class HttpServiceTest(unittest.TestCase):
         _add_extra('ENVIRONMENT')
 
         logs = []
-        with service.Container(self.SERVICE, port, extras, logs) as port_map:
+        with base.Container(self.SERVICE, port, extras, logs) as port_map:
             self.host, self.port = port_map
             self.base_url = 'http://{}:{}'.format(self.host, self.port)
 
