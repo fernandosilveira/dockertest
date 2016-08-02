@@ -33,7 +33,7 @@ CLASSIFIERS = [
     "Topic :: Software Development :: Libraries :: Python Modules",
     "Topic :: Software Development :: Testing",
 ]
-INSTALL_REQUIRES = ['requests']
+INSTALL_REQUIRES = ['requests>=2.10.0', 'docker-py>=1.9.0']
 
 ###################################################################
 
@@ -80,5 +80,6 @@ if __name__ == "__main__":
         long_description=read("README.md"),
         packages=PACKAGES,
         package_dir={"": "src"},
+        install_requires=INSTALL_REQUIRES,
         classifiers=CLASSIFIERS
     )
