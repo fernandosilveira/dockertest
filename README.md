@@ -1,3 +1,3 @@
-# dockertools - Facilities to manipulate docker containers in python.
+# dockertools - Facilities to manipulate docker containers for tests in python.
 
 Author: Fernando Silveira

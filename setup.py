@@ -11,9 +11,9 @@ import setuptools
 
 ###################################################################
 
-NAME = "dockertools"
-PACKAGES = ["dockertools"]
-META_PATH = os.path.join("src", "dockertools", "__init__.py")
+NAME = "dockertest"
+PACKAGES = ["dockertest"]
+META_PATH = os.path.join("src", "dockertest", "__init__.py")
 KEYWORDS = ["docker", "testing", "container"]
 CLASSIFIERS = [
     "Development Status :: 3 - Alpha",

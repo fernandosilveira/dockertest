@@ -3,8 +3,8 @@
 # Package metadata
 __version__ = "1.0a"
 
-__title__ = "dockertools"
-__description__ = "Facilities to manipulate docker containers in python."
+__title__ = "dockertest"
+__description__ = "Facilities to manipulate docker containers for tests in python."
 
 __author__ = "Fernando Silveira"
 __email__ = "fernando@f14a.com"
