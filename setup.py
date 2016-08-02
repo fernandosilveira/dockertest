@@ -7,7 +7,7 @@ import codecs
 import os
 import re
 
-from distutils import core
+import setuptools
 
 ###################################################################
 
@@ -66,7 +66,7 @@ def find_meta(meta):
 
 
 if __name__ == "__main__":
-    core.setup(
+    setuptools.setup(
         name=NAME,
         description=find_meta("description"),
         license=find_meta("license"),
