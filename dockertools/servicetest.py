@@ -1,10 +1,12 @@
+"""Utility classes to run simple service tests with containers."""
+
 import logging
 import requests
 import sys
 import time
 import unittest
 
-import service
+from . import base
 
 
 class ServiceTest(unittest.TestCase):
@@ -30,7 +32,7 @@ class ServiceTest(unittest.TestCase):
         _add_extra('VOLUMES')
         _add_extra('ENVIRONMENT')
 
-        with service.Container(self.SERVICE, ports, extras) as port_map:
+        with base.Container(self.SERVICE, ports, extras) as port_map:
             self.port_map = port_map
 
             # special case - when only one port was requested
