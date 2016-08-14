@@ -42,19 +42,20 @@ def run_container(client, service, ports, extras=None):
     if missing_ports:
         raise RuntimeError('Cannot locate service ports in image')
 
-    volumes = dict(
-        (path.abspath(volume), mountpoint)
-        for (volume, mountpoint) in extras.get('volumes', {}).items()
+    volumes = extras.get('volumes', None)
+    binds = dict(
+        (path.abspath(local_dir), container_dir)
+        for (local_dir, container_dir) in extras.get('binds', {}).items()
     )
 
     container = client.create_container(
         image=image['Id'],
         ports=ports,
-        volumes=list(volumes.keys()) if volumes else None,
+        volumes=volumes,
         environment=extras.get('environment'),
         host_config=client.create_host_config(
             port_bindings=dict((port, None) for port in ports),
-            binds=volumes if volumes else None
+            binds=binds if binds else None
         )
     )
 

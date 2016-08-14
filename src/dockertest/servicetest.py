@@ -30,6 +30,7 @@ class ServiceTest(unittest.TestCase):
                 extras[key.lower()] = value
 
         _add_extra('VOLUMES')
+        _add_extra('BINDS')
         _add_extra('ENVIRONMENT')
 
         with base.Container(self.SERVICE, ports, extras) as port_map:
@@ -62,6 +63,7 @@ class HttpServiceTest(unittest.TestCase):
                 extras[key.lower()] = value
 
         _add_extra('VOLUMES')
+        _add_extra('BINDS')
         _add_extra('ENVIRONMENT')
 
         logs = []
