@@ -76,7 +76,7 @@ class HttpServiceTest(unittest.TestCase):
 
         if result:
             for testcase, errors in result.errors:
-                if testcase == self:
+                if str(testcase) == str(self):
                     self._output_logs(sys.stderr, logs)
 
     def request(self, method, path, **kwargs):
@@ -157,3 +157,4 @@ class HttpServiceTest(unittest.TestCase):
         stream.write('{}\n'.format(single_line))
         stream.write(' END OF CONTAINER LOGS\n')
         stream.write('{}\n'.format(double_line))
+        stream.flush()
