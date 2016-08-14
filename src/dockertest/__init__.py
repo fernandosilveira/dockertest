@@ -1,7 +1,7 @@
 """Header file to expose modules at the package root."""
 
 # Package metadata
-__version__ = "1.0a"
+__version__ = "1.0.1"
 
 __title__ = "dockertest"
 __description__ = "Facilities to manipulate docker containers for tests in python."
