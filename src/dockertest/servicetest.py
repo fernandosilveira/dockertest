@@ -128,7 +128,6 @@ class HttpServiceTest(unittest.TestCase):
     def _request(self, method, path, **kwargs):
         url = self._build_url(path)
         response = self.http_session.request(method, url, **kwargs)
-        response.raise_for_status()
         return response
 
     def _connect(self, max_tries=10, min_interval=0.1, max_interval=5.0):
