@@ -79,29 +79,63 @@ class HttpServiceTest(unittest.TestCase):
                 if testcase == self:
                     self._output_logs(sys.stderr, logs)
 
-    def build_url(self, path):
-        separator = '' if path.startswith('/') else '/'
-        return self.base_url + separator + path
-
     def request(self, method, path, **kwargs):
-        url = self.build_url(path)
-        response = self.http_session.request(method, url, **kwargs)
-        response.raise_for_status()
-        return response
+        """Issues a HTTP request to service.
+
+        Args:
+            method (str): HTTP method to use (e.g., 'GET', 'POST')
+            path (str): path to HTTP resource
+            **kwargs: keyword arguments to requests call
+
+        Returns:
+            int: HTTP respnose status code
+        """
+        response = self._request(method, path, **kwargs)
+        return response.status_code
 
     def request_json(self, method, path, **kwargs):
-        response = self.request(method, path, **kwargs)
+        """Issues a HTTP request to service expecting a JSON response.
+
+        Args:
+            method (str): HTTP method to use (e.g., 'GET', 'POST')
+            path (str): path to HTTP resource
+            **kwargs: keyword arguments to requests call
+
+        Returns:
+            int, dict: HTTP respnose status code and JSON response
+        """
+        response = self._request(method, path, **kwargs)
         return response.status_code, response.json()
 
     def request_text(self, method, path, **kwargs):
-        response = self.request(method, path, **kwargs)
+        """Issues a HTTP request to service expecting a text response.
+
+        Args:
+            method (str): HTTP method to use (e.g., 'GET', 'POST')
+            path (str): path to HTTP resource
+            **kwargs: keyword arguments to requests call
+
+        Returns:
+            int, str: HTTP respnose status code and text response
+        """
+        response = self._request(method, path, **kwargs)
         return response.status_code, response.text
+
+    def _build_url(self, path):
+        separator = '' if path.startswith('/') else '/'
+        return self.base_url + separator + path
+
+    def _request(self, method, path, **kwargs):
+        url = self._build_url(path)
+        response = self.http_session.request(method, url, **kwargs)
+        response.raise_for_status()
+        return response
 
     def _connect(self, max_tries=10, min_interval=0.1, max_interval=5.0):
         interval = min_interval
         for index in range(1, max_tries + 1):
             try:
-                self.http_session.options(self.build_url('/'))
+                self.http_session.options(self._build_url('/'))
             except requests.ConnectionError:
                 logging.info('Failed to connect (attempt #{})'.format(index))
                 if index < max_tries:
