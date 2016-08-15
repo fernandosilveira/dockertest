@@ -77,7 +77,7 @@ class HttpServiceTest(unittest.TestCase):
                 super(HttpServiceTest, self).run(result)
 
         if result:
-            for testcase, errors in result.errors:
+            for (testcase, _) in result.errors + result.failures:
                 if str(testcase) == str(self):
                     self._output_logs(sys.stderr, logs)
 
@@ -107,7 +107,11 @@ class HttpServiceTest(unittest.TestCase):
             int, dict: HTTP respnose status code and JSON response
         """
         response = self._request(method, path, **kwargs)
-        return response.status_code, response.json()
+        try:
+            json_data = response.json()
+        except ValueError:
+            json_data = None
+        return response.status_code, json_data
 
     def request_text(self, method, path, **kwargs):
         """Issues a HTTP request to service expecting a text response.
